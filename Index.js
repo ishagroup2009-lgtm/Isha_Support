@@ -163,41 +163,15 @@ const io = new Server(server, {
 const onlineUsers = new Map();
 
 // 🔥 FCM SEND FUNCTION
-// async function sendFCM(token, title, body, data = {}) {
-//     try {
-//         await admin.messaging().send({
-//             token: token,
-//             notification: {
-//                 title: title,
-//                 body: body,
-//             },
-//             data: data, // 👈 important for navigation
-//         });
-
-//         console.log("📲 FCM SENT");
-//     } catch (err) {
-//         console.log("❌ FCM ERROR:", err.message);
-//     }
-// }
-
 async function sendFCM(token, title, body, data = {}) {
     try {
         await admin.messaging().send({
             token: token,
-
-            // ❌ REMOVE THIS
-            // notification: { title, body },
-
-            // ✅ ONLY DATA PAYLOAD
-            data: {
-                ...data,
+            notification: {
                 title: title,
-                body: body
+                body: body,
             },
-
-            android: {
-                priority: "high", // 🔥 MUST
-            },
+            data: data, // 👈 important for navigation
         });
 
         console.log("📲 FCM SENT");
@@ -205,6 +179,7 @@ async function sendFCM(token, title, body, data = {}) {
         console.log("❌ FCM ERROR:", err.message);
     }
 }
+
 
 io.on("connection", (socket) => {
     console.log("🟢 User connected:", socket.id);
