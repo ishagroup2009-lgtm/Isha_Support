@@ -240,6 +240,7 @@ io.on("connection", (socket) => {
             {
                 type: "callAccepted",
                 callerId: String(callerId),
+                callerToken: fcmToken
             }
         );
     });
