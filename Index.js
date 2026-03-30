@@ -257,6 +257,25 @@ io.on("connection", (socket) => {
         );
     });
 
+    socket.on("endCall", async ({ callerId, fcmToken }) => {
+        console.log("📴 Call ended by:", callerId);
+
+        if (!fcmToken) {
+            console.log("❌ TOKEN MISSING");
+            return;
+        }
+
+        await sendFCM(
+            fcmToken,
+            "Call Ended 📴",
+            "Call has been ended",
+            {
+                type: "callEnded",
+                callerId: String(callerId),
+            }
+        );
+    });
+
     socket.on("disconnect", () => {
         console.log("🔴 User disconnected:", socket.id);
     });
