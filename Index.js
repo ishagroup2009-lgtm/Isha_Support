@@ -163,15 +163,41 @@ const io = new Server(server, {
 const onlineUsers = new Map();
 
 // 🔥 FCM SEND FUNCTION
+// async function sendFCM(token, title, body, data = {}) {
+//     try {
+//         await admin.messaging().send({
+//             token: token,
+//             notification: {
+//                 title: title,
+//                 body: body,
+//             },
+//             data: data, // 👈 important for navigation
+//         });
+
+//         console.log("📲 FCM SENT");
+//     } catch (err) {
+//         console.log("❌ FCM ERROR:", err.message);
+//     }
+// }
+
+
 async function sendFCM(token, title, body, data = {}) {
     try {
         await admin.messaging().send({
             token: token,
-            notification: {
+
+            // 🔥 VERY IMPORTANT (kill mode ke liye)
+            android: {
+                priority: "high",
+            },
+
+            // ❌ notification hata diya
+            // ✅ sirf data bhejna hai
+            data: {
                 title: title,
                 body: body,
+                ...data,
             },
-            data: data, // 👈 important for navigation
         });
 
         console.log("📲 FCM SENT");
