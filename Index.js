@@ -233,18 +233,19 @@ io.on("connection", (socket) => {
     });
 
     // 📞 CALL → ALWAYS FCM
-    socket.on("callUser", async ({ callerId, receiverId, fcmToken, callerFcmToken }) => {
+    socket.on("callUser", async ({ callerId, receiverId, fcmToken, callerFcmToken, callername }) => {
 
         console.log("📞 Call:", callerId, "→", receiverId);
 
         await sendFCM(
             fcmToken,
-            "Incoming Call 📞",
-            "Tap to answer",
+            "📞 Incoming Call",
+            `${callername} is calling you...`,
             {
                 type: "call",
                 callerId: String(callerId),
-                callerToken: callerFcmToken
+                callerToken: callerFcmToken,
+                callername: callername
             }
         );
     });
