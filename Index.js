@@ -304,6 +304,80 @@ io.on("connection", (socket) => {
         );
     });
 
+    //Video Call Events
+
+    socket.on("videoCallUser", async ({ callerId, receiverId, fcmToken, callerFcmToken, callername }) => {
+
+        console.log("🎥 Video Call:", callerId, "→", receiverId);
+
+        await sendFCM(
+            fcmToken,
+            "🎥 Incoming Video Call",
+            `${callername} is video calling you...`,
+            {
+                type: "videoCall",
+                callerId: String(callerId),
+                callerToken: callerFcmToken,
+                callername: callername
+            }
+        );
+    });
+
+    socket.on("acceptVideoCall", async ({ callerId, fcmToken }) => {
+
+        console.log("🎥 Video Call Accepted:", callerId);
+
+        if (!fcmToken) return;
+
+        await sendFCM(
+            fcmToken,
+            "Video Call Accepted ✅",
+            "Your video call was accepted",
+            {
+                type: "videoCallAccepted",
+                callerId: String(callerId),
+                callerToken: fcmToken
+            }
+        );
+    });
+
+    socket.on("rejectVideoCall", async ({ callerId, fcmToken }) => {
+
+    console.log("❌ Video Call Rejected:", callerId);
+
+    await sendFCM(
+        fcmToken,
+        "Video Call Rejected ❌",
+        "Your video call was rejected",
+        {
+            type: "videoCallRejected",
+            callerId: String(callerId),
+        }
+    );
+});
+
+socket.on("endVideoCall", async ({ callerId, fcmToken }) => {
+
+    console.log("📴 Video Call Ended:", callerId);
+
+    if (!fcmToken) return;
+
+    await sendFCM(
+        fcmToken,
+        "Video Call Ended 📴",
+        "Video call has been ended",
+        {
+            type: "videoCallEnded",
+            callerId: String(callerId),
+        }
+    );
+});
+
+
+
+
+
+
     socket.on("disconnect", () => {
         console.log("🔴 User disconnected:", socket.id);
     });
