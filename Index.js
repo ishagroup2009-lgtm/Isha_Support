@@ -305,7 +305,7 @@ io.on("connection", (socket) => {
     });
 
     // 📞 CALL → ALWAYS FCM
-    socket.on("callUser", async ({ callerId, receiverId, fcmToken, callerFcmToken, callername }) => {
+    socket.on("callUser", async ({ callerId, receiverId, fcmToken, callerFcmToken, callername, channelName }) => {
 
         console.log("📞 Call:", callerId, "→", receiverId);
 
@@ -317,7 +317,8 @@ io.on("connection", (socket) => {
                 type: "call",
                 callerId: String(callerId),
                 callerToken: callerFcmToken,
-                callername: callername
+                callername: callername,
+                channelName: channelName
             }
         );
     });
