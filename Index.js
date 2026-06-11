@@ -378,7 +378,7 @@ io.on("connection", (socket) => {
 
     //Video Call Events
 
-    socket.on("videoCallUser", async ({ callerId, receiverId, fcmToken, callerFcmToken, callername }) => {
+    socket.on("videoCallUser", async ({ callerId, receiverId, fcmToken, callerFcmToken, callername, channelName }) => {
 
         console.log("🎥 Video Call:", callerId, "→", receiverId);
 
@@ -390,7 +390,8 @@ io.on("connection", (socket) => {
                 type: "videoCall",
                 callerId: String(callerId),
                 callerToken: callerFcmToken,
-                callername: callername
+                callername: callername,
+                channelName: channelName
             }
         );
     });
