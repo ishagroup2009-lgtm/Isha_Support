@@ -144,12 +144,18 @@ const admin = require("firebase-admin");
 // 🔑 Firebase config
 const serviceAccount = JSON.parse(process.env.FIREBASE_KEY);
 
+const {
+    RtcTokenBuilder,
+    RtcRole,
+} = require("agora-token");
+
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
 });
 
 const app = express();
 app.use(cors());
+app.use(express.json());
 
 const server = http.createServer(app);
 
@@ -179,6 +185,72 @@ const onlineUsers = new Map();
 //         console.log("❌ FCM ERROR:", err.message);
 //     }
 // }
+
+app.post(
+    "/generate-agora-token",
+
+    async (req, res) => {
+
+        try {
+
+            const { channelName, uid } = req.body;
+
+            // 👇 agora credentials
+            const appId =
+                "5585e4187e7c42a38f304f4c1bfae791";
+
+            const appCertificate =
+                "dd5d6d53050743c0bb675621453d9d7f";
+
+            const role =
+                RtcRole.PUBLISHER;
+
+            // 👇 token expiry
+            const expirationTimeInSeconds =
+                3600;
+
+            const currentTimestamp =
+                Math.floor(Date.now() / 1000);
+
+            const privilegeExpiredTs =
+                currentTimestamp +
+                expirationTimeInSeconds;
+
+            // 👇 token generate
+            const token =
+                RtcTokenBuilder.buildTokenWithUid(
+                    appId,
+                    appCertificate,
+                    channelName,
+                    Number(uid),
+                    role,
+                    privilegeExpiredTs
+                );
+
+            res.json({
+                status: true,
+                token,
+                channelName,
+                uid,
+            });
+
+        } catch (error) {
+
+            console.log(
+                "AGORA TOKEN ERROR",
+                error
+            );
+
+            res.status(500).json({
+                status: false,
+                message: error.message,
+            });
+
+        }
+
+    }
+);
+
 
 
 async function sendFCM(token, title, body, data = {}) {
@@ -343,35 +415,35 @@ io.on("connection", (socket) => {
 
     socket.on("rejectVideoCall", async ({ callerId, fcmToken }) => {
 
-    console.log("❌ Video Call Rejected:", callerId);
+        console.log("❌ Video Call Rejected:", callerId);
 
-    await sendFCM(
-        fcmToken,
-        "Video Call Rejected ❌",
-        "Your video call was rejected",
-        {
-            type: "videoCallRejected",
-            callerId: String(callerId),
-        }
-    );
-});
+        await sendFCM(
+            fcmToken,
+            "Video Call Rejected ❌",
+            "Your video call was rejected",
+            {
+                type: "videoCallRejected",
+                callerId: String(callerId),
+            }
+        );
+    });
 
-socket.on("endVideoCall", async ({ callerId, fcmToken }) => {
+    socket.on("endVideoCall", async ({ callerId, fcmToken }) => {
 
-    console.log("📴 Video Call Ended:", callerId);
+        console.log("📴 Video Call Ended:", callerId);
 
-    if (!fcmToken) return;
+        if (!fcmToken) return;
 
-    await sendFCM(
-        fcmToken,
-        "Video Call Ended 📴",
-        "Video call has been ended",
-        {
-            type: "videoCallEnded",
-            callerId: String(callerId),
-        }
-    );
-});
+        await sendFCM(
+            fcmToken,
+            "Video Call Ended 📴",
+            "Video call has been ended",
+            {
+                type: "videoCallEnded",
+                callerId: String(callerId),
+            }
+        );
+    });
 
 
 
