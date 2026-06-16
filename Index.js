@@ -450,48 +450,40 @@ io.on("connection", (socket) => {
 
     //Group Messages 
 
+    socket.on("joinGroup", ({ groupId, userId }) => {
+        socket.join(`group_${groupId}`);
 
-    socket.on('joinGroup', (groupId) => {
+        console.log(
+            `👥 User ${userId} joined group ${groupId}`
+        );
+    });
 
-        const roomId = groupId.toString()
 
-        socket.join(roomId)
+    socket.on(
+        "sendGroupMessage",
+        async ({
+            groupId,
+            senderId,
+            senderName,
+            message
+        }) => {
 
-        console.log("✅ User joined group room:", roomId)
-    })
+            console.log(
+                `💬 Group ${groupId}: ${senderName}`
+            );
 
-    socket.on('sendGroupMessage', async ({ senderId, groupId, message }) => {
-        try {
-
-            console.log("🔥 Message received on backend:", senderId, groupId, message)
-
-            if (!senderId || !groupId || !message) {
-                return
-            }
-
-            // Save message
-            const newMessage = await Message.create({
-                senderId,
-                groupId,
-                message,
-            })
-
-            // Populate sender name
-            const populatedMessage = await Message.findById(newMessage._id)
-                .populate("senderId", "name")
-
-            // VERY IMPORTANT → always use string room
-            io.to(groupId.toString()).emit(
-                'receiveGroupMessage',
-                populatedMessage
-            )
-
-            console.log("✅ Message emitted to room:", groupId)
-
-        } catch (error) {
-            console.log('❌ Group message error:', error.message)
+            io.to(`group_${groupId}`).emit(
+                "receiveGroupMessage",
+                {
+                    groupId,
+                    senderId,
+                    senderName,
+                    message,
+                    createdAt: new Date()
+                }
+            );
         }
-    })
+    );
 
 
 
