@@ -140,6 +140,8 @@ const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
 const admin = require("firebase-admin");
+const mongoose = require("mongoose");
+const GroupMessage = require("./models/GroupMessage");
 
 // 🔑 Firebase config
 const serviceAccount = JSON.parse(process.env.FIREBASE_KEY);
@@ -153,10 +155,13 @@ admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
 });
 
+const connectDB = require("./db");
+
+
 const app = express();
 app.use(cors());
 app.use(express.json());
-
+connectDB();
 const server = http.createServer(app);
 
 const io = new Server(server, {
@@ -185,6 +190,35 @@ const onlineUsers = new Map();
 //         console.log("❌ FCM ERROR:", err.message);
 //     }
 // }
+
+app.get(
+    "/group-messages/:groupId",
+    async (req, res) => {
+
+        try {
+
+            const messages =
+                await GroupMessage.find({
+                    groupId: req.params.groupId
+                }).sort({
+                    createdAt: 1
+                });
+
+            res.json({
+                status: true,
+                data: messages
+            });
+
+        } catch (error) {
+
+            res.status(500).json({
+                status: false,
+                message: error.message
+            });
+
+        }
+    }
+);
 
 app.post(
     "/generate-agora-token",
@@ -459,6 +493,34 @@ io.on("connection", (socket) => {
     });
 
 
+    // socket.on(
+    //     "sendGroupMessage",
+    //     async ({
+    //         groupId,
+    //         senderId,
+    //         senderName,
+    //         message
+    //     }) => {
+
+    //         console.log(
+    //             `💬 Group ${groupId}: ${senderName}`
+    //         );
+
+    //         io.to(`group_${groupId}`).emit(
+    //             "receiveGroupMessage",
+    //             {
+    //                 groupId,
+    //                 senderId,
+    //                 senderName,
+    //                 message,
+    //                 createdAt: new Date()
+    //             }
+    //         );
+    //     }
+    // );
+
+
+
     socket.on(
         "sendGroupMessage",
         async ({
@@ -468,22 +530,40 @@ io.on("connection", (socket) => {
             message
         }) => {
 
-            console.log(
-                `💬 Group ${groupId}: ${senderName}`
-            );
+            try {
 
-            io.to(`group_${groupId}`).emit(
-                "receiveGroupMessage",
-                {
-                    groupId,
-                    senderId,
-                    senderName,
-                    message,
-                    createdAt: new Date()
-                }
-            );
+                const savedMessage =
+                    await GroupMessage.create({
+                        groupId,
+                        senderId,
+                        senderName,
+                        message,
+                        messageType: "text"
+                    });
+
+                io.to(`group_${groupId}`).emit(
+                    "receiveGroupMessage",
+                    savedMessage
+                );
+
+            } catch (error) {
+
+                console.log(
+                    "GROUP SAVE ERROR:",
+                    error
+                );
+
+            }
         }
     );
+    socket.on("leaveGroup", ({ groupId, userId }) => {
+
+        socket.leave(`group_${groupId}`);
+
+        console.log(
+            `🚪 User ${userId} left group ${groupId}`
+        );
+    });
 
 
 
