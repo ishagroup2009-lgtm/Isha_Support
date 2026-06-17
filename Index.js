@@ -223,28 +223,21 @@ const onlineUsers = new Map();
 app.get(
     "/group-messages/:groupId",
     async (req, res) => {
-
         try {
 
-            const page =
-                Number(req.query.page) || 1;
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 20;
 
-            const limit = 20;
+            const skip = (page - 1) * limit;
 
-            const skip =
-                (page - 1) * limit;
+            const messages = await GroupMessage.find({
+                groupId: req.params.groupId
+            })
+                .sort({ createdAt: -1 }) // latest first
+                .skip(skip)
+                .limit(limit);
 
-            const messages =
-                await GroupMessage.find({
-                    groupId: req.params.groupId
-                })
-                    .sort({
-                        createdAt: -1
-                    })
-                    .skip(skip)
-                    .limit(limit);
-
-            const total =
+            const totalMessages =
                 await GroupMessage.countDocuments({
                     groupId: req.params.groupId
                 });
@@ -252,10 +245,11 @@ app.get(
             res.json({
                 status: true,
                 data: messages,
-                total,
+                page,
+                totalMessages,
                 hasMore:
-                    total >
-                    page * limit
+                    skip + messages.length <
+                    totalMessages,
             });
 
         } catch (error) {
@@ -266,7 +260,6 @@ app.get(
             });
 
         }
-
     }
 );
 
