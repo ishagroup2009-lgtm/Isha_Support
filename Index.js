@@ -191,22 +191,71 @@ const onlineUsers = new Map();
 //     }
 // }
 
+// app.get(
+//     "/group-messages/:groupId",
+//     async (req, res) => {
+
+//         try {
+
+//             const messages =
+//                 await GroupMessage.find({
+//                     groupId: req.params.groupId
+//                 }).sort({
+//                     createdAt: 1
+//                 });
+
+//             res.json({
+//                 status: true,
+//                 data: messages
+//             });
+
+//         } catch (error) {
+
+//             res.status(500).json({
+//                 status: false,
+//                 message: error.message
+//             });
+
+//         }
+//     }
+// );
+
 app.get(
     "/group-messages/:groupId",
     async (req, res) => {
 
         try {
 
+            const page =
+                Number(req.query.page) || 1;
+
+            const limit = 20;
+
+            const skip =
+                (page - 1) * limit;
+
             const messages =
                 await GroupMessage.find({
                     groupId: req.params.groupId
-                }).sort({
-                    createdAt: 1
+                })
+                    .sort({
+                        createdAt: -1
+                    })
+                    .skip(skip)
+                    .limit(limit);
+
+            const total =
+                await GroupMessage.countDocuments({
+                    groupId: req.params.groupId
                 });
 
             res.json({
                 status: true,
-                data: messages
+                data: messages,
+                total,
+                hasMore:
+                    total >
+                    page * limit
             });
 
         } catch (error) {
@@ -217,6 +266,7 @@ app.get(
             });
 
         }
+
     }
 );
 
