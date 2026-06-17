@@ -493,7 +493,6 @@ io.on("connection", (socket) => {
     });
 
 
-    // socket.on(
     //     "sendGroupMessage",
     //     async ({
     //         groupId,
@@ -523,39 +522,48 @@ io.on("connection", (socket) => {
 
     socket.on(
         "sendGroupMessage",
-        async ({
-            groupId,
-            senderId,
-            senderName,
-            message
-        }) => {
+        async (data) => {
+
+            console.log("================================");
+            console.log("GROUP DATA RECEIVED");
+            console.log("groupId:", data.groupId);
+            console.log("senderId:", data.senderId);
+            console.log("senderName:", data.senderName);
+            console.log("message:", data.message);
+            console.log("FULL DATA:", JSON.stringify(data));
+            console.log("================================");
 
             try {
 
                 const savedMessage =
                     await GroupMessage.create({
-                        groupId,
-                        senderId,
-                        senderName,
-                        message,
+                        groupId: data.groupId,
+                        senderId: data.senderId,
+                        senderName: data.senderName,
+                        message: data.message,
                         messageType: "text"
                     });
 
-                io.to(`group_${groupId}`).emit(
+                console.log(
+                    "✅ GROUP MESSAGE SAVED:",
+                    savedMessage._id
+                );
+
+                io.to(`group_${data.groupId}`).emit(
                     "receiveGroupMessage",
                     savedMessage
                 );
 
             } catch (error) {
 
-                console.log(
-                    "GROUP SAVE ERROR:",
-                    error
-                );
+                console.log("❌ GROUP SAVE ERROR");
+                console.log(error);
 
             }
         }
     );
+
+
     socket.on("leaveGroup", ({ groupId, userId }) => {
 
         socket.leave(`group_${groupId}`);
